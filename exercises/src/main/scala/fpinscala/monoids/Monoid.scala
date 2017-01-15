@@ -21,7 +21,10 @@ object Monoid {
     val zero = Nil
   }
 
-  val intAddition: Monoid[Int] = sys.error("todo")
+  val intAddition: Monoid[Int] = new Monoid[Int] {
+    def op(x1: Int, x2: Int) = x1 + x2
+    val zero = 0
+  }
 
   val intMultiplication: Monoid[Int] = sys.error("todo")
 
@@ -29,9 +32,15 @@ object Monoid {
 
   val booleanAnd: Monoid[Boolean] = sys.error("todo")
 
-  def optionMonoid[A]: Monoid[Option[A]] = sys.error("todo")
+  def optionMonoid[A]: Monoid[Option[A]] = new Monoid[Option[A]] {
+    def op(x1: Option[A], x2: Option[A]) = x1 orElse x2
+    def zero = None
+  }
 
-  def endoMonoid[A]: Monoid[A => A] = sys.error("todo")
+  def endoMonoid[A]: Monoid[A => A] = new Monoid[A => A] {
+    def op(f: A => A, g: A => A) = f compose g
+    def zero = A => A
+  }
 
   // TODO: Placeholder for `Prop`. Remove once you have implemented the `Prop`
   // data type from Part 2.
@@ -46,11 +55,9 @@ object Monoid {
 
   def trimMonoid(s: String): Monoid[String] = sys.error("todo")
 
-  def concatenate[A](as: List[A], m: Monoid[A]): A =
-    sys.error("todo")
+  def concatenate[A](as: List[A], m: Monoid[A]): A = as.foldLeft(m.zero)(m.op)
 
-  def foldMap[A, B](as: List[A], m: Monoid[B])(f: A => B): B =
-    sys.error("todo")
+  def foldMap[A, B](as: List[A], m: Monoid[B])(f: A => B): B = concatenate(as.map(f), m)
 
   def foldRight[A, B](as: List[A])(z: B)(f: (A, B) => B): B =
     sys.error("todo")
@@ -59,7 +66,14 @@ object Monoid {
     sys.error("todo")
 
   def foldMapV[A, B](as: IndexedSeq[A], m: Monoid[B])(f: A => B): B =
-    sys.error("todo")
+    if (as.isEmpty)
+      m.zero
+    else if (as.size == 1)
+        f(as.head)
+    else {
+      val (r, l) = as.splitAt(as.size / 2)
+      m.op(foldMapV(r, m)(f), foldMapV(l, m)(f))
+    }
 
   def ordered(ints: IndexedSeq[Int]): Boolean =
     sys.error("todo")
